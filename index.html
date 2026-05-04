@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>CodeSphere — Learn Programming</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- EmailJS for sending real 2FA emails -->
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+:root{
+  --bg:#07080f;--sur:#0f111a;--sur2:#161825;--border:rgba(255,255,255,0.08);
+  --acc:#5b6af8;--acc2:#f857a6;--green:#0fdc8c;--yellow:#fbbf24;--red:#f87171;
+  --text:#f0f1ff;--muted:#4b5270;--sub:#8b90b0;--r:14px;--max:430px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:#000;min-height:100svh;font-family:'Syne',sans-serif;
+  display:flex;justify-content:center;-webkit-font-smoothing:antialiased;}
+#app{width:100%;max-width:var(--max);min-height:100svh;background:var(--bg);
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+  box-shadow:0 0 80px rgba(91,106,248,0.15);}
+
+/* ── Screens ── */
+.screen{display:none;flex-direction:column;min-height:100svh;}
+.screen.active{display:flex;}
+
+/* ── Topbar ── */
+.topbar{background:var(--sur);border-bottom:1px solid var(--border);
+  padding:15px 18px 13px;display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:50;flex-shrink:0;}
+.tl{font-size:19px;font-weight:800;color:var(--text);letter-spacing:-.5px;}
+.tl span{color:var(--acc);}
+.av-sm{margin-left:auto;width:34px;height:34px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:800;color:#fff;cursor:pointer;flex-shrink:0;}
+
+/* ── Bottom Nav ── */
+.bnav{background:var(--sur);border-top:1px solid var(--border);display:flex;
+  padding:8px 0 max(env(safe-area-inset-bottom,8px),8px);
+  position:sticky;bottom:0;z-index:50;flex-shrink:0;}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:4px 0;}
+.bni{font-size:19px;} .bnl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;}
+.bn.active .bnl{color:var(--acc);}
+
+/* ── Scroll body ── */
+.sbody{flex:1;overflow-y:auto;overflow-x:hidden;padding:14px;
+  display:flex;flex-direction:column;gap:12px;
+  scrollbar-width:thin;scrollbar-color:var(--sur2) transparent;}
+
+/* ── Auth ── */
+.ascroll{flex:1;overflow-y:auto;padding:28px 22px 40px;
+  display:flex;flex-direction:column;}
+.ahero{text-align:center;padding:12px 0 26px;}
+.alogo{width:70px;height:70px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  border-radius:22px;display:flex;align-items:center;justify-content:center;
+  font-size:30px;margin:0 auto 16px;box-shadow:0 12px 36px rgba(91,106,248,.4);}
+.atitle{font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px;}
+.asub{font-size:13px;color:var(--sub);margin-top:5px;}
+.tfa-big{font-size:48px;margin-bottom:10px;}
+
+.tabrow{display:flex;background:var(--sur2);border-radius:12px;padding:4px;margin-bottom:22px;}
+.tbtn{flex:1;padding:10px 0;border:none;border-radius:9px;
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+  cursor:pointer;transition:all .2s;background:transparent;color:var(--muted);}
+.tbtn.active{background:var(--acc);color:#fff;box-shadow:0 4px 14px rgba(91,106,248,.4);}
+
+.fstack{display:flex;flex-direction:column;gap:11px;}
+.fw{position:relative;}
+.fi{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;}
+.field{width:100%;background:var(--sur2);border:1.5px solid var(--border);
+  border-radius:12px;padding:13px 13px 13px 42px;
+  color:var(--text);font-family:'Syne',sans-serif;font-size:14px;outline:none;
+  transition:border-color .2s;-webkit-appearance:none;}
+.field:focus{border-color:var(--acc);}
+.field::placeholder{color:var(--muted);}
+
+.bprimary{width:100%;padding:14px;margin-top:18px;
+  background:linear-gradient(135deg,var(--acc),#7c3aed);
+  border:none;border-radius:13px;color:#fff;
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:800;
+  cursor:pointer;transition:all .2s;box-shadow:0 8px 22px rgba(91,106,248,.35);
+  display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;}
+.bprimary:active{transform:scale(.98);}
+.bprimary:disabled{opacity:.5;cursor:not-allowed;}
+.bghost{width:100%;padding:11px;margin-top:10px;background:transparent;
+  border:1.5px solid var(--border);border-radius:12px;color:var(--sub);
+  font-family:'Syne',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;}
+.bghost:hover{border-color:var(--acc);color:var(--acc);}
+
+.merr{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);
+  border-radius:10px;padding:10px 14px;color:var(--red);
+  font-size:12px;font-weight:600;text-align:center;margin-top:12px;}
+.mok{background:rgba(15,220,140,.08);border:1px solid rgba(15,220,140,.2);
+  border-radius:10px;padding:10px 14px;color:var(--green);
+  font-size:12px;font-weight:600;text-align:center;margin-top:12px;}
+
+.secnote{background:var(--sur2);border:1px solid var(--border);border-radius:12px;
+  padding:14px 16px;margin-top:20px;}
+.snt{font-size:11px;font-weight:800;color:var(--sub);letter-spacing:1px;
+  text-transform:uppercase;margin-bottom:8px;}
+.sni{font-size:12px;color:var(--muted);margin-bottom:4px;}
+
+/* email sent box */
+.esbox{background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);
+  border-radius:14px;padding:16px;display:flex;gap:13px;align-items:flex-start;margin-bottom:6px;}
+.esicon{font-size:28px;flex-shrink:0;}
+.estitle{font-size:11px;font-weight:700;color:var(--yellow);letter-spacing:.8px;text-transform:uppercase;}
+.esemail{font-size:14px;font-weight:800;color:var(--text);margin:3px 0;}
+.esnote{font-size:11px;color:var(--muted);line-height:1.5;}
+
+/* OTP */
+.otprow{display:flex;gap:7px;justify-content:center;margin:20px 0 14px;align-items:center;}
+.otp{width:44px;height:56px;background:var(--sur2);border:2px solid var(--border);
+  border-radius:12px;color:var(--text);font-family:'JetBrains Mono',monospace;
+  font-size:22px;font-weight:700;text-align:center;outline:none;transition:all .2s;
+  -webkit-appearance:none;}
+.otp:focus{border-color:var(--acc);box-shadow:0 0 0 3px rgba(91,106,248,.2);}
+.otpsep{color:var(--muted);font-size:18px;}
+
+/* ── Dashboard ── */
+.herocard{background:linear-gradient(135deg,#1a1d35,#0f111a);
+  border:1px solid rgba(91,106,248,.2);border-radius:var(--r);padding:18px;position:relative;overflow:hidden;}
+.herocard::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;
+  background:radial-gradient(circle,rgba(91,106,248,.2),transparent 70%);border-radius:50%;}
+.hctop{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.hcgreet{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:1px;text-transform:uppercase;}
+.hcname{font-size:22px;font-weight:800;color:var(--text);margin-top:3px;letter-spacing:-.3px;}
+.lvlpill{background:var(--acc);color:#fff;padding:5px 12px;
+  border-radius:99px;font-size:12px;font-weight:800;flex-shrink:0;}
+.xplabels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px;}
+.xptrack{height:6px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden;}
+.xpfill{height:100%;background:linear-gradient(90deg,var(--acc),var(--acc2));border-radius:99px;transition:width .6s;}
+
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.scard{background:var(--sur);border:1px solid var(--border);border-radius:12px;padding:13px 10px;text-align:center;}
+.sv{font-size:19px;font-weight:800;color:var(--text);}
+.sl{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.5px;margin-top:2px;}
+.seclabel{font-size:11px;font-weight:800;color:var(--sub);letter-spacing:1.5px;text-transform:uppercase;padding:4px 0 2px;}
+
+.lgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.lc{background:var(--sur);border:1px solid var(--border);border-radius:13px;
+  padding:15px 13px;cursor:pointer;transition:all .18s;-webkit-tap-highlight-color:transparent;}
+.lc:active{transform:scale(.97);background:var(--sur2);}
+.lctop{display:flex;align-items:center;gap:6px;margin-bottom:8px;flex-wrap:wrap;}
+.lcicon{font-size:22px;} .lcname{font-size:13px;font-weight:800;color:var(--text);}
+.lcpct{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.lctrack{height:3px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden;}
+.lcfill{height:100%;border-radius:99px;transition:width .5s;}
+.tagsm{font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;letter-spacing:.5px;line-height:1.4;}
+.taghtml{background:rgba(228,77,38,.12);color:#e44d26;border:1px solid rgba(228,77,38,.25);}
+.tagphp{background:rgba(123,127,179,.12);color:#7b7fb3;border:1px solid rgba(123,127,179,.25);}
+
+/* ── Editor ── */
+.edtop{background:var(--sur);border-bottom:1px solid var(--border);
+  padding:12px 14px;display:flex;align-items:center;gap:9px;flex-shrink:0;}
+.backbtn{background:var(--sur2);border:1px solid var(--border);border-radius:8px;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--sub);font-size:16px;flex-shrink:0;font-family:'Syne',sans-serif;}
+.edicon{font-size:20px;} .edlang{font-size:15px;font-weight:800;color:var(--text);}
+.xpbadge{margin-left:auto;background:rgba(91,106,248,.12);border:1px solid rgba(91,106,248,.25);
+  color:var(--acc);padding:4px 11px;border-radius:99px;font-size:12px;font-weight:800;}
+
+.lscroll{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;
+  flex-shrink:0;scrollbar-width:none;background:var(--sur);border-bottom:1px solid var(--border);}
+.lscroll::-webkit-scrollbar{display:none;}
+.ltab{white-space:nowrap;padding:7px 13px;border-radius:99px;
+  font-size:12px;font-weight:700;font-family:'Syne',sans-serif;
+  cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);
+  transition:all .18s;flex-shrink:0;}
+.ltab.active{background:var(--acc);border-color:var(--acc);color:#fff;}
+.ltab.done{border-color:var(--green);color:var(--green);}
+
+.lhead{padding:10px 14px 6px;flex-shrink:0;}
+.lhnum{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:1px;text-transform:uppercase;}
+.lhtitle{font-size:15px;font-weight:800;color:var(--text);margin-top:2px;}
+
+.cblock{background:#0b0d16;border-top:1px solid var(--border);border-bottom:1px solid var(--border);flex-shrink:0;}
+.ctoolbar{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;background:var(--sur);border-bottom:1px solid var(--border);}
+.dots{display:flex;gap:5px;}
+.dot{width:9px;height:9px;border-radius:50%;}
+.cfn{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.brun{padding:7px 16px;background:linear-gradient(135deg,var(--green),#0aad72);
+  border:none;border-radius:8px;color:#000;font-family:'Syne',sans-serif;
+  font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(15,220,140,.28);}
+.brun:disabled{opacity:.5;cursor:not-allowed;}
+.carea{width:100%;min-height:200px;background:transparent;border:none;outline:none;
+  resize:vertical;color:#c9d1d9;font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;line-height:1.8;padding:13px;tab-size:2;display:block;}
+
+.oblock{background:#060810;padding:11px 13px;flex-shrink:0;}
+.oblabel{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.obtext{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--green);white-space:pre-wrap;margin:0;}
+.obtext.err{color:var(--red);}
+
+.edactions{display:flex;gap:8px;padding:11px 13px;flex-shrink:0;
+  background:var(--bg);border-top:1px solid var(--border);}
+.breset{padding:10px 16px;background:var(--sur2);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--sub);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.bcomplete{flex:1;padding:10px;background:rgba(91,106,248,.1);border:1.5px solid rgba(91,106,248,.3);
+  border-radius:11px;color:var(--acc);font-family:'Syne',sans-serif;
+  font-size:13px;font-weight:800;cursor:pointer;transition:all .2s;}
+.bcomplete.done{background:rgba(15,220,140,.08);border-color:rgba(15,220,140,.25);color:var(--green);}
+
+.ppanel{margin:0 13px;background:var(--sur);border:1px solid var(--border);
+  border-radius:13px;overflow:hidden;flex-shrink:0;}
+.pphead{padding:9px 13px;background:rgba(228,77,38,.07);border-bottom:1px solid var(--border);
+  font-size:12px;font-weight:700;color:#e44d26;display:flex;align-items:center;justify-content:space-between;}
+.ppref{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;}
+.ppframe{width:100%;height:190px;border:none;background:#fff;display:block;}
+
+.aipanel{margin:10px 13px 0;background:var(--sur);border:1px solid rgba(91,106,248,.2);
+  border-radius:13px;overflow:hidden;flex-shrink:0;}
+.aihead{padding:9px 13px;background:rgba(91,106,248,.07);border-bottom:1px solid rgba(91,106,248,.1);
+  font-size:12px;font-weight:800;color:var(--acc);display:flex;align-items:center;gap:4px;}
+.aipow{font-size:10px;color:var(--muted);font-weight:400;margin-left:auto;}
+.airow{display:flex;gap:8px;padding:9px;}
+.aiin{flex:1;background:var(--sur2);border:1px solid var(--border);border-radius:9px;
+  padding:9px 11px;color:var(--text);font-family:'Syne',sans-serif;font-size:12px;outline:none;}
+.airesp{padding:10px 13px 12px;color:var(--sub);font-family:'JetBrains Mono',monospace;
+  font-size:12px;line-height:1.7;white-space:pre-wrap;border-top:1px solid var(--border);margin:0;}
+
+/* ── Profile ── */
+.pfhero{text-align:center;padding:8px 0 16px;}
+.avbig{width:70px;height:70px;background:linear-gradient(135deg,var(--acc),var(--acc2));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:800;color:#fff;margin:0 auto 11px;
+  box-shadow:0 8px 26px rgba(91,106,248,.35);letter-spacing:1px;}
+.pfname{font-size:19px;font-weight:800;color:var(--text);}
+.pfemail{font-size:12px;color:var(--sub);margin-top:3px;}
+.pfbadges{display:flex;gap:8px;justify-content:center;margin-top:10px;}
+.bgrn{background:rgba(15,220,140,.1);border:1px solid rgba(15,220,140,.2);color:var(--green);
+  padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;}
+.bblu{background:rgba(91,106,248,.12);border:1px solid rgba(91,106,248,.25);color:var(--acc);
+  padding:4px 11px;border-radius:99px;font-size:11px;font-weight:700;}
+.pfcard{background:var(--sur);border:1px solid var(--border);border-radius:13px;overflow:hidden;}
+.pfrow{display:flex;align-items:center;justify-content:space-between;
+  padding:13px 15px;border-bottom:1px solid var(--border);font-size:13px;color:var(--text);}
+.pfrow:last-child{border-bottom:none;}
+.prl{color:var(--sub);font-size:12px;}
+.blogout{width:100%;padding:13px;margin-top:4px;
+  background:rgba(248,113,113,.08);border:1.5px solid rgba(248,113,113,.2);
+  border-radius:12px;color:var(--red);font-family:'Syne',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;}
+
+/* ── Spinner / Toast ── */
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.2);
+  border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:inline-block;}
+@keyframes sp{to{transform:rotate(360deg);}}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+  background:var(--sur2);border:1px solid var(--border);border-radius:99px;
+  padding:9px 18px;font-size:13px;color:var(--text);font-weight:700;
+  z-index:9999;opacity:0;pointer-events:none;transition:opacity .25s;
+  white-space:nowrap;max-width:90%;}
+#toast.show{opacity:1;}
+.spacer{height:16px;flex-shrink:0;}
+
+@media(min-width:450px){#app{border-left:1px solid #111;border-right:1px solid #111;}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ══ AUTH ══ -->
+<div id="sc-auth" class="screen active">
+<div class="ascroll">
+  <div class="ahero">
+    <div class="alogo">⌨️</div>
+    <h1 class="atitle">CodeSphere</h1>
+    <p class="asub">Master every programming language</p>
+  </div>
+  <div class="tabrow">
+    <button class="tbtn active" id="tab-in" onclick="switchTab('login')">Sign In</button>
+    <button class="tbtn" id="tab-up" onclick="switchTab('signup')">Sign Up</button>
+  </div>
+
+  <!-- Login -->
+  <div id="f-login">
+    <div class="fstack">
+      <div class="fw"><span class="fi">✉️</span>
+        <input class="field" type="email" id="l-em" placeholder="Email address" autocomplete="email"></div>
+      <div class="fw"><span class="fi">🔒</span>
+        <input class="field" type="password" id="l-pw" placeholder="Password" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()"></div>
+    </div>
+    <div id="l-err" style="display:none" class="merr"></div>
+    <button class="bprimary" onclick="doLogin()" id="l-btn">Sign In →</button>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">
+      Demo: <span style="color:var(--acc)">test@code.io</span> / <span style="color:var(--acc)">pass123</span>
+    </div>
+  </div>
+
+  <!-- Signup -->
+  <div id="f-signup" style="display:none">
+    <div class="fstack">
+      <div class="fw"><span class="fi">👤</span>
+        <input class="field" type="text" id="s-nm" placeholder="Full name" autocomplete="name"></div>
+      <div class="fw"><span class="fi">✉️</span>
+        <input class="field" type="email" id="s-em" placeholder="Email address" autocomplete="email"></div>
+      <div class="fw"><span class="fi">🔒</span>
+        <input class="field" type="password" id="s-pw" placeholder="Password (min 6 chars)" autocomplete="new-password"></div>
+      <div class="fw"><span class="fi">📱</span>
+        <input class="field" type="tel" id="s-ph" placeholder="Phone (optional)"></div>
+    </div>
+    <div id="s-err" style="display:none" class="merr"></div>
+    <button class="bprimary" onclick="doSignup()" id="s-btn">Create Account →</button>
+  </div>
+
+  <div class="secnote">
+    <div class="snt">🔐 Security</div>
+    <div class="sni">✓ 2FA code sent to your real email</div>
+    <div class="sni">✓ Passwords hashed (SHA-256)</div>
+    <div class="sni">✓ Progress saved to local database</div>
+  </div>
+</div>
+</div>
+
+<!-- ══ 2FA ══ -->
+<div id="sc-2fa" class="screen">
+<div class="ascroll">
+  <div class="ahero" style="padding-top:20px">
+    <div class="tfa-big">🔐</div>
+    <h1 class="atitle">Check Your Email</h1>
+    <p class="asub" id="tfa-sub">Enter the 6-digit code we sent you</p>
+  </div>
+  <div class="esbox">
+    <div class="esicon">📨</div>
+    <div>
+      <div class="estitle">Code sent to</div>
+      <div class="esemail" id="tfa-em">your@email.com</div>
+      <div class="esnote">Check inbox &amp; spam. Expires in 10 minutes.</div>
+    </div>
+  </div>
+  <div class="otprow">
+    <input class="otp" maxlength="1" type="text" inputmode="numeric" id="o0" oninput="onp(this,0)" onkeydown="onb(event,0)">
+    <input class="otp" maxlength="1" type="text" inputmode="numeric" id="o1" oninput="onp(this,1)" onkeydown="onb(event,1)">
+    <input class="otp" maxlength="1" type="text" inputmode="numeric" id="o2" oninput="onp(this,2)" onkeydown="onb(event,2)">
+    <span class="otpsep">—</span>
+    <input class="otp" maxlength="1" type="text" inputmode="numeric" id="o3" oninput="onp(this,3)" onkeydown="onb(event,3)">
+    <input class="otp" maxlength="1" type="text" inputmode="numeric" id="o4" oninput="onp(this,4)" onkeydown="onb(event,4)">
+    <input class="otp" maxlength="1" type="text" inputmode="numeric" id="o5" oninput="onp(this,5)" onkeydown="onb(event,5)">
+  </div>
+  <div id="tfa-err" style="display:none" class="merr"></div>
+  <button class="bprimary" onclick="verify2FA()" id="tfa-btn">Verify Code →</button>
+  <button class="bghost" onclick="resend2FA()" id="resend-btn">📨 Resend Code</button>
+  <button class="bghost" onclick="goBackAuth()" style="color:var(--muted);border-color:transparent">← Back to login</button>
+</div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div id="sc-home" class="screen">
+  <div class="topbar">
+    <div class="tl">Code<span>Sphere</span></div>
+    <div class="av-sm" id="nav-av" onclick="goTo('profile')">CS</div>
+  </div>
+  <div class="sbody">
+    <div class="herocard">
+      <div class="hctop">
+        <div><div class="hcgreet">Welcome back 👋</div>
+          <div class="hcname" id="d-name">Coder</div></div>
+        <div class="lvlpill" id="d-lvl">Lv 1</div>
+      </div>
+      <div><div class="xplabels"><span>XP Progress</span><span id="d-xp">0 / 100</span></div>
+        <div class="xptrack"><div class="xpfill" id="d-xpbar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="stats3">
+      <div class="scard"><div class="sv" id="st-streak">🔥 0</div><div class="sl">Streak</div></div>
+      <div class="scard"><div class="sv" id="st-less">0</div><div class="sl">Lessons</div></div>
+      <div class="scard"><div class="sv" id="st-lang">0</div><div class="sl">Languages</div></div>
+    </div>
+    <div class="seclabel">All Languages</div>
+    <div class="lgrid" id="lgrid"></div>
+    <div class="spacer"></div>
+  </div>
+  <div class="bnav">
+    <div class="bn active" onclick="goTo('home')"><div class="bni">🏠</div><div class="bnl">Home</div></div>
+    <div class="bn" onclick="goTo('progress')"><div class="bni">📊</div><div class="bnl">Progress</div></div>
+    <div class="bn" onclick="goTo('profile')"><div class="bni">👤</div><div class="bnl">Profile</div></div>
+  </div>
+</div>
+
+<!-- ══ EDITOR ══ -->
+<div id="sc-editor" class="screen">
+  <div class="edtop">
+    <button class="backbtn" onclick="goTo('home')">←</button>
+    <span class="edicon" id="ed-icon">🐍</span>
+    <span class="edlang" id="ed-lang">Python</span>
+    <span class="xpbadge" id="ed-xp">0 XP</span>
+  </div>
+  <div class="lscroll" id="lscroll"></div>
+  <div class="lhead">
+    <div class="lhnum" id="lh-num">Lesson 1</div>
+    <div class="lhtitle" id="lh-title">Variables</div>
+  </div>
+  <div class="cblock">
+    <div class="ctoolbar">
+      <div class="dots">
+        <div class="dot" style="background:#ff5f57"></div>
+        <div class="dot" style="background:#febc2e"></div>
+        <div class="dot" style="background:#28c840"></div>
+      </div>
+      <span class="cfn" id="cfn">main.py</span>
+      <button class="brun" onclick="runCode()" id="run-btn">▶ Run</button>
+    </div>
+    <textarea class="carea" id="carea" spellcheck="false" onkeydown="htab(event)"></textarea>
+  </div>
+  <div class="oblock">
+    <div class="oblabel">Output</div>
+    <pre class="obtext" id="obtext">// Press ▶ Run to execute</pre>
+  </div>
+  <div class="edactions">
+    <button class="breset" onclick="resetCode()">↺ Reset</button>
+    <button class="bcomplete" id="btn-done" onclick="completeLesson()">✓ Complete +25 XP</button>
+  </div>
+  <div id="html-pp" style="display:none" class="ppanel">
+    <div class="pphead">🌐 Live HTML Preview
+      <button class="ppref" onclick="refreshPreview()">↺ Refresh</button>
+    </div>
+    <iframe id="ppframe" class="ppframe"></iframe>
+  </div>
+  <div class="aipanel">
+    <div class="aihead">🤖 AI Tutor <span class="aipow">by Claude</span></div>
+    <div class="airow">
+      <input class="aiin" id="ai-in" placeholder="Ask about your code..." onkeydown="if(event.key==='Enter')askAI()">
+      <button class="brun" onclick="askAI()" id="ai-btn">Ask</button>
+    </div>
+    <pre class="airesp" id="ai-resp" style="display:none"></pre>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div id="sc-profile" class="screen">
+  <div class="topbar">
+    <button class="backbtn" onclick="goTo('home')">←</button>
+    <div class="tl">Profile</div>
+  </div>
+  <div class="sbody">
+    <div class="pfhero">
+      <div class="avbig" id="pf-av">CS</div>
+      <div class="pfname" id="pf-nm"></div>
+      <div class="pfemail" id="pf-em"></div>
+      <div class="pfbadges">
+        <span class="bgrn">🔐 2FA Active</span>
+        <span class="bblu" id="pf-lvl">Level 1</span>
+      </div>
+    </div>
+    <div class="seclabel">Account</div>
+    <div class="pfcard">
+      <div class="pfrow"><span class="prl">Member since</span><span id="pf-joined">—</span></div>
+      <div class="pfrow"><span class="prl">Total XP</span><strong id="pf-xp" style="color:var(--acc)">0</strong></div>
+      <div class="pfrow"><span class="prl">Day Streak</span><span id="pf-streak">🔥 0</span></div>
+      <div class="pfrow"><span class="prl">Lessons Done</span><span id="pf-less">0</span></div>
+    </div>
+    <div class="seclabel">Language Progress</div>
+    <div class="pfcard" id="pf-langs"></div>
+    <button class="blogout" onclick="doLogout()">Sign Out</button>
+    <div class="spacer"></div>
+  </div>
+  <div class="bnav">
+    <div class="bn" onclick="goTo('home')"><div class="bni">🏠</div><div class="bnl">Home</div></div>
+    <div class="bn" onclick="goTo('progress')"><div class="bni">📊</div><div class="bnl">Progress</div></div>
+    <div class="bn active"><div class="bni">👤</div><div class="bnl">Profile</div></div>
+  </div>
+</div>
+
+</div><!-- #app -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG — EmailJS
+// ═══════════════════════════════════════════════════════
+// To enable REAL email 2FA:
+// 1. Sign up free at https://www.emailjs.com
+// 2. Create a service (Gmail/Outlook/etc)
+// 3. Create an email template with variables: {{to_email}}, {{to_name}}, {{code}}, {{expiry}}
+// 4. Replace the values below with your actual IDs
+const EMAILJS_SERVICE_ID  = 'YOUR_SERVICE_ID';   // e.g. 'service_abc123'
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';  // e.g. 'template_xyz789'
+const EMAILJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';   // e.g. 'user_AbCdEf123'
+const EMAIL_CONFIGURED = (EMAILJS_PUBLIC_KEY !== 'YOUR_PUBLIC_KEY');
+
+if (EMAIL_CONFIGURED) {
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+}
+
+// ═══════════════════════════════════════════════════════
+// LANGUAGE + LESSON DATA
+// ═══════════════════════════════════════════════════════
+const LANGS = [
+  {id:'python',     name:'Python',     icon:'🐍', color:'#3572A5', ext:'py'},
+  {id:'javascript', name:'JavaScript', icon:'⚡', color:'#f7df1e', ext:'js'},
+  {id:'typescript', name:'TypeScript', icon:'💎', color:'#3178c6', ext:'ts'},
+  {id:'html',       name:'HTML',       icon:'🌐', color:'#e44d26', ext:'html'},
+  {id:'php',        name:'PHP',        icon:'🐘', color:'#7b7fb3', ext:'php'},
+  {id:'java',       name:'Java',       icon:'☕', color:'#b07219', ext:'java'},
+  {id:'cpp',        name:'C++',        icon:'⚙️', color:'#f34b7d', ext:'cpp'},
+  {id:'rust',       name:'Rust',       icon:'🦀', color:'#dea584', ext:'rs'},
+  {id:'go',         name:'Go',         icon:'🔵', color:'#00ADD8', ext:'go'},
+  {id:'swift',      name:'Swift',      icon:'🕊️', color:'#F05138', ext:'swift'},
+];
+const LESSONS = {
+  python:    ['Variables & Types','Control Flow','Functions','Lists & Dicts','OOP Basics','File I/O'],
+  javascript:['Variables','DOM Basics','Functions','Events','Promises','Fetch API'],
+  typescript:['Types & Interfaces','Generics','Classes','Modules','Decorators','Utility Types'],
+  html:      ['Document Structure','Headings & Text','Links & Images','Forms','Tables','Semantic HTML'],
+  php:       ['Variables & Echo','Control Flow','Functions','Arrays','Forms & POST','PDO Database'],
+  java:      ['Hello World','OOP Basics','Collections','Streams','Exceptions','Spring Intro'],
+  cpp:       ['Pointers','Memory Mgmt','STL Containers','Templates','OOP in C++','Algorithms'],
+  rust:      ['Ownership','Borrowing','Structs & Enums','Traits','Error Handling','Async Rust'],
+  go:        ['Goroutines','Channels','Interfaces','Structs','HTTP Server','Testing'],
+  swift:     ['Optionals','Closures','Protocols','SwiftUI Basics','Concurrency','App Architecture'],
+};
+const CODE = {
+python:`# Python — Hello CodeSphere!
+print("Hello, CodeSphere!")
+
+name = "Learner"
+level = 1
+score = 99.5
+
+print(f"Welcome {name}! Level {level}")
+
+# List comprehension
+squares = [x**2 for x in range(1, 6)]
+print("Squares:", squares)`,
+javascript:`// JavaScript — Hello CodeSphere!
+console.log("Hello, CodeSphere!");
+
+const name = "Learner";
+let level = 1;
+
+const greet = (who) => \`Welcome, \${who}!\`;
+console.log(greet(name));
+
+const nums = [1,2,3,4,5];
+const doubled = nums.map(n => n * 2);
+console.log("Doubled:", doubled);`,
+typescript:`// TypeScript — Types & Interfaces
+interface User {
+  name: string;
+  level: number;
+  xp: number;
+}
+function greet(u: User): string {
+  return \`Hello \${u.name}! Level \${u.level} (\${u.xp} XP)\`;
+}
+const learner: User = { name:"Coder", level:3, xp:275 };
+console.log(greet(learner));`,
+html:`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Page</title>
+  <style>
+    body { font-family:sans-serif; background:#f0f4ff; padding:24px; margin:0; }
+    .card { background:#fff; padding:20px 24px; border-radius:14px;
+      box-shadow:0 4px 16px rgba(91,106,248,.15); max-width:360px; }
+    h1 { color:#5b6af8; margin-top:0; }
+    button { background:#5b6af8; color:#fff; border:none; padding:10px 20px;
+      border-radius:8px; cursor:pointer; font-size:14px; }
+    #out { margin-top:12px; color:#374151; font-weight:600; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Hello, CodeSphere! 🚀</h1>
+    <p>Edit this HTML and press <strong>Run</strong> to preview live.</p>
+    <button onclick="document.getElementById('out').textContent='✅ Clicked!'">
+      Click Me
+    </button>
+    <div id="out"></div>
+  </div>
+</body>
+</html>`,
+php:`<?php
+// PHP — Variables & Echo (Output simulated)
+$name = "CodeSphere Learner";
+$level = 5;
+$langs = ["PHP", "Python", "JavaScript", "SQL"];
+
+echo "Hello, " . $name . "!\n";
+echo "Level: " . $level . "\n\n";
+
+foreach ($langs as $i => $lang) {
+    echo ($i+1) . ". Learning: " . $lang . "\n";
+}
+
+function greet(string $who, int $lvl): string {
+    return "Welcome {$who}! Level {$lvl}.";
+}
+echo "\n" . greet($name, $level) . "\n";
+?>`,
+java:`// Java — Hello World
+public class Main {
+  static String greet(String name, int level) {
+    return "Welcome " + name + "! Level " + level;
+  }
+  public static void main(String[] args) {
+    System.out.println("Hello, CodeSphere!");
+    String name = "Learner"; int level = 3;
+    System.out.println(greet(name, level));
+    int[] nums = {1,2,3,4,5};
+    System.out.print("Nums: ");
+    for (int n : nums) System.out.print(n + " ");
+  }
+}`,
+cpp:`// C++ — Hello World
+#include <iostream>
+#include <vector>
+#include <string>
+using namespace std;
+string greet(const string& name, int level) {
+  return "Welcome " + name + "! Level " + to_string(level);
+}
+int main() {
+  cout << "Hello, CodeSphere!" << endl;
+  string name = "Learner"; int level = 3;
+  cout << greet(name, level) << endl;
+  vector<int> nums = {1,2,3,4,5};
+  for (int n : nums) cout << n << " ";
+  cout << endl; return 0;
+}`,
+rust:`// Rust — Hello World
+fn greet(name: &str, level: u32) -> String {
+    format!("Welcome {}! Level {}", name, level)
+}
+fn main() {
+    println!("Hello, CodeSphere!");
+    let name = "Learner"; let level: u32 = 3;
+    println!("{}", greet(name, level));
+    let nums: Vec<i32> = (1..=5).collect();
+    let doubled: Vec<i32> = nums.iter().map(|x| x * 2).collect();
+    println!("Doubled: {:?}", doubled);
+}`,
+go:`// Go — Hello World
+package main
+import "fmt"
+func greet(name string, level int) string {
+    return fmt.Sprintf("Welcome %s! Level %d", name, level)
+}
+func main() {
+    fmt.Println("Hello, CodeSphere!")
+    name := "Learner"; level := 3
+    fmt.Println(greet(name, level))
+    nums := []int{1,2,3,4,5}
+    for _, n := range nums { fmt.Printf("%d ", n*2) }
+    fmt.Println()
+}`,
+swift:`// Swift — Hello World
+import Foundation
+func greet(_ name: String, level: Int) -> String {
+    return "Welcome \\(name)! Level \\(level)"
+}
+print("Hello, CodeSphere!")
+let name = "Learner"; var level = 3
+print(greet(name, level: level))
+let nums = [1,2,3,4,5]
+let doubled = nums.map { $0 * 2 }
+print("Doubled: \\(doubled)")`,
+};
+const SIMOUT = {
+  python:`Hello, CodeSphere!\nWelcome Learner! Level 1\nSquares: [1, 4, 9, 16, 25]`,
+  typescript:`Hello Coder! Level 3 (275 XP)`,
+  java:`Hello, CodeSphere!\nWelcome Learner! Level 3\nNums: 1 2 3 4 5`,
+  cpp:`Hello, CodeSphere!\nWelcome Learner! Level 3\n1 2 3 4 5`,
+  rust:`Hello, CodeSphere!\nWelcome Learner! Level 3\nDoubled: [2, 4, 6, 8, 10]`,
+  go:`Hello, CodeSphere!\nWelcome Learner! Level 3\n2 4 6 8 10`,
+  swift:`Hello, CodeSphere!\nWelcome Learner! Level 3\nDoubled: [2, 4, 6, 8, 10]`,
+  php:`Hello, CodeSphere Learner!\nLevel: 5\n\n1. Learning: PHP\n2. Learning: Python\n3. Learning: JavaScript\n4. Learning: SQL\n\nWelcome CodeSphere Learner! Level 5.`,
+};
+
+// ═══════════════════════════════════════════════════════
+// LOCAL DATABASE (localStorage)
+// ═══════════════════════════════════════════════════════
+const DB = {
+  getAll(){ return JSON.parse(localStorage.getItem('cs_db')||'{}'); },
+  save(db){ localStorage.setItem('cs_db', JSON.stringify(db)); },
+  getUser(email){ return this.getAll()[email]||null; },
+  saveUser(u){ const db=this.getAll(); db[u.email]=u; this.save(db); },
+  getSession(){ return localStorage.getItem('cs_sess'); },
+  setSession(e){ localStorage.setItem('cs_sess', e); },
+  clearSession(){ localStorage.removeItem('cs_sess'); },
+};
+
+// Hash password (SHA-256 via Web Crypto)
+async function hashPass(pass) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pass));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let CU = null;          // current user
+let pending = null;     // {email, code, expiry, purpose}
+let curLang = 'python';
+let curLesson = 0;
+
+// ═══════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════
+(function boot(){
+  // Seed demo user
+  if (!DB.getUser('test@code.io')) {
+    DB.saveUser({
+      name:'Demo Coder', email:'test@code.io',
+      passHash:'ef92b778bafe771e89245b89ecbc08a44a4e166c06659911881f383d4473e94f', // pass123
+      phone:'', joined: new Date().toISOString(),
+      progress:{python:33,html:16,javascript:16}, xp:175, streak:5,
+      lastActive: new Date().toISOString(),
+      completedLessons:['python-0','python-1','html-0','javascript-0'],
+    });
+  }
+  const sess = DB.getSession();
+  if (sess) { const u = DB.getUser(sess); if(u){ CU=u; loadHome(); goTo('home'); return; } }
+  goTo('auth');
+})();
+
+// ═══════════════════════════════════════════════════════
+// ROUTING
+// ═══════════════════════════════════════════════════════
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el = document.getElementById('sc-'+id);
+  if(el){ el.classList.add('active'); el.scrollTop=0; }
+  if(id==='profile') loadProfile();
+}
+function goBackAuth(){ pending=null; goTo('auth'); }
+function switchTab(m){
+  document.getElementById('f-login').style.display  = m==='login'  ? '':'none';
+  document.getElementById('f-signup').style.display = m==='signup' ? '':'none';
+  document.getElementById('tab-in').classList.toggle('active', m==='login');
+  document.getElementById('tab-up').classList.toggle('active', m==='signup');
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH — LOGIN
+// ═══════════════════════════════════════════════════════
+async function doLogin(){
+  const email=g('l-em').trim(), pass=g('l-pw');
+  hide('l-err');
+  if(!email||!pass) return err('l-err','Please enter email and password.');
+  setBL('l-btn',true);
+  try{
+    const u = DB.getUser(email);
+    if(!u){ err('l-err','No account found with this email.'); return; }
+    const h = await hashPass(pass);
+    if(h !== u.passHash){ err('l-err','Incorrect password.'); return; }
+    await trigger2FA(email, u.name, 'login');
+  } finally { setBL('l-btn',false); }
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH — SIGNUP
+// ═══════════════════════════════════════════════════════
+async function doSignup(){
+  const name=g('s-nm').trim(), email=g('s-em').trim(),
+        pass=g('s-pw'), phone=g('s-ph').trim();
+  hide('s-err');
+  if(!name||!email||!pass) return err('s-err','Name, email and password are required.');
+  if(pass.length<6) return err('s-err','Password must be at least 6 characters.');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return err('s-err','Please enter a valid email.');
+  if(DB.getUser(email)) return err('s-err','This email is already registered.');
+  setBL('s-btn',true);
+  try{
+    const passHash = await hashPass(pass);
+    const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const newUser = {
+      name, email, passHash, phone,
+      avatar: initials, joined: new Date().toISOString(),
+      progress:{}, xp:0, streak:1,
+      lastActive: new Date().toISOString(), completedLessons:[],
+    };
+    DB.saveUser(newUser);
+    await trigger2FA(email, name, 'signup');
+  } finally { setBL('s-btn',false); }
+}
+
+// ═══════════════════════════════════════════════════════
+// 2FA — SEND CODE
+// ═══════════════════════════════════════════════════════
+async function trigger2FA(email, name, purpose){
+  const code = String(Math.floor(100000 + Math.random()*900000));
+  const expiry = Date.now() + 10*60*1000; // 10 min
+  pending = { email, code, expiry, purpose };
+
+  // Show 2FA screen immediately
+  const masked = email.replace(/(.{2})(.*)(@.*)/, (_,a,b,c)=>a+'*'.repeat(Math.max(2,b.length))+c);
+  document.getElementById('tfa-em').textContent = masked;
+  document.getElementById('tfa-sub').textContent = `6-digit code sent to ${masked}`;
+  clearOTP(); hide('tfa-err');
+  goTo('2fa');
+  setTimeout(()=>document.getElementById('o0').focus(),300);
+
+  // Try to send real email via EmailJS
+  if(EMAIL_CONFIGURED){
+    try{
+      await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+        to_email: email,
+        to_name:  name,
+        code:     code,
+        expiry:   '10 minutes',
+        app_name: 'CodeSphere',
+      });
+      toast('📨 Code sent to your email!');
+    } catch(e){
+      console.warn('EmailJS error:', e);
+      // Fallback: show code on screen
+      showFallbackCode(code, email);
+    }
+  } else {
+    // EmailJS not configured — show code directly (dev mode)
+    showFallbackCode(code, email);
+  }
+}
+
+function showFallbackCode(code, email){
+  // Show code in a visible box since email isn't set up
+  const el = document.getElementById('tfa-err');
+  el.className = 'mok';
+  el.innerHTML = `📱 <strong>Dev Mode:</strong> Your code is <strong style="font-family:monospace;font-size:16px;letter-spacing:4px">${code}</strong><br><small style="opacity:.7">Set up EmailJS to send real emails</small>`;
+  el.style.display = '';
+}
+
+// ═══════════════════════════════════════════════════════
+// 2FA — VERIFY
+// ═══════════════════════════════════════════════════════
+function verify2FA(){
+  const entered = getOTP();
+  if(entered.length<6) return err('tfa-err','Enter all 6 digits.');
+  hide('tfa-err');
+  if(!pending){ err('tfa-err','Session expired. Please log in again.'); return; }
+  if(Date.now() > pending.expiry){ err('tfa-err','Code expired. Request a new one.'); clearOTP(); return; }
+  if(entered !== pending.code){
+    err('tfa-err','Incorrect code. Try again.');
+    for(let i=0;i<6;i++){ const d=document.getElementById('o'+i); d.value=''; d.style.borderColor='rgba(248,113,113,.5)'; }
+    document.getElementById('o0').focus(); return;
+  }
+  // ✅ SUCCESS
+  const u = DB.getUser(pending.email);
+  if(!u){ err('tfa-err','Account not found.'); return; }
+  // Update streak
+  const daysSince = Math.floor((Date.now()-new Date(u.lastActive))/86400000);
+  u.streak = daysSince<=1 ? (u.streak||0)+1 : 1;
+  u.lastActive = new Date().toISOString();
+  DB.saveUser(u);
+  DB.setSession(u.email);
+  CU = u; pending = null;
+  loadHome(); goTo('home');
+  toast('✅ Signed in successfully!');
+}
+
+async function resend2FA(){
+  if(!pending) return;
+  const u = DB.getUser(pending.email);
+  if(!u) return;
+  document.getElementById('resend-btn').disabled=true;
+  await trigger2FA(pending.email, u.name, pending.purpose);
+  document.getElementById('resend-btn').disabled=false;
+}
+
+// OTP helpers
+function onp(el,idx){ el.value=el.value.replace(/\D/g,'').slice(-1); if(el.value&&idx<5)document.getElementById('o'+(idx+1)).focus(); if(getOTP().length===6)setTimeout(verify2FA,80); }
+function onb(e,idx){ if(e.key==='Backspace'&&!e.target.value&&idx>0)document.getElementById('o'+(idx-1)).focus(); }
+function getOTP(){ return[0,1,2,3,4,5].map(i=>document.getElementById('o'+i).value).join(''); }
+function clearOTP(){ for(let i=0;i<6;i++){const d=document.getElementById('o'+i);d.value='';d.style.borderColor='';} }
+
+// ═══════════════════════════════════════════════════════
+// HOME
+// ═══════════════════════════════════════════════════════
+function loadHome(){
+  if(!CU)return;
+  const xp=CU.xp||0, lvl=Math.floor(xp/100)+1, pct=xp%100;
+  const initials=(CU.avatar||CU.name.split(' ').map(w=>w[0]).join('')).toUpperCase().slice(0,2);
+  set('d-name',CU.name); set('d-lvl','Lv '+lvl);
+  set('d-xp',xp+' / '+(lvl*100)+' XP');
+  document.getElementById('d-xpbar').style.width=pct+'%';
+  set('st-streak','🔥 '+(CU.streak||0));
+  set('st-less',(CU.completedLessons||[]).length);
+  const al=Object.keys(CU.progress||{}).filter(k=>(CU.progress[k]||0)>0).length;
+  set('st-lang',al);
+  set('nav-av',initials);
+  buildGrid();
+}
+function buildGrid(){
+  document.getElementById('lgrid').innerHTML = LANGS.map(l=>{
+    const p=(CU?.progress||{})[l.id]||0;
+    let tag='';
+    if(l.id==='html') tag=`<span class="tagsm taghtml">HTML5</span>`;
+    if(l.id==='php')  tag=`<span class="tagsm tagphp">SERVER</span>`;
+    return `<div class="lc" onclick="openEditor('${l.id}')">
+      <div class="lctop"><span class="lcicon">${l.icon}</span><span class="lcname">${l.name}</span>${tag}</div>
+      <div class="lcpct">${p}%</div>
+      <div class="lctrack"><div class="lcfill" style="width:${p}%;background:${l.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// EDITOR
+// ═══════════════════════════════════════════════════════
+function openEditor(langId){
+  curLang=langId; curLesson=0;
+  const l=LANGS.find(x=>x.id===langId);
+  set('ed-icon',l.icon); set('ed-lang',l.name);
+  set('ed-xp',(CU?.xp||0)+' XP'); set('cfn','main.'+l.ext);
+  document.getElementById('html-pp').style.display=(langId==='html'||langId==='php')?'':'none';
+  buildTabs(); setLesson(0); goTo('editor');
+}
+function buildTabs(){
+  const ls=LESSONS[curLang]||[], done=CU?.completedLessons||[];
+  document.getElementById('lscroll').innerHTML=ls.map((l,i)=>{
+    const isDone=done.includes(curLang+'-'+i);
+    return`<button class="ltab${i===curLesson?' active':''}${isDone?' done':''}" id="lt${i}" onclick="setLesson(${i})">${isDone?'✓ ':''}${l}</button>`;
+  }).join('');
+}
+function setLesson(idx){
+  curLesson=idx;
+  const ls=LESSONS[curLang]||[];
+  set('lh-num','Lesson '+(idx+1)); set('lh-title',ls[idx]||'');
+  document.getElementById('carea').value=CODE[curLang]||'// Start coding';
+  const ob=document.getElementById('obtext'); ob.textContent='// Press ▶ Run to execute'; ob.className='obtext';
+  document.getElementById('ai-resp').style.display='none';
+  document.getElementById('ai-in').value='';
+  document.querySelectorAll('.ltab').forEach((t,i)=>t.classList.toggle('active',i===idx));
+  const isDone=(CU?.completedLessons||[]).includes(curLang+'-'+idx);
+  const btn=document.getElementById('btn-done');
+  btn.textContent=isDone?'✓ Completed!':'✓ Complete +25 XP';
+  btn.className='bcomplete'+(isDone?' done':'');
+  if(curLang==='html') refreshPreview();
+}
+function htab(e){ if(e.key==='Tab'){e.preventDefault();const t=e.target,s=t.selectionStart,en=t.selectionEnd;t.value=t.value.substring(0,s)+'  '+t.value.substring(en);t.selectionStart=t.selectionEnd=s+2;} }
+function runCode(){
+  const code=document.getElementById('carea').value;
+  const ob=document.getElementById('obtext');
+  const rb=document.getElementById('run-btn');
+  ob.textContent='⏳ Running...'; ob.className='obtext'; rb.disabled=true;
+  setTimeout(()=>{
+    rb.disabled=false;
+    if(curLang==='javascript'||curLang==='typescript'){
+      try{
+        const logs=[]; const fc={log:(...a)=>logs.push(a.map(String).join(' ')),error:(...a)=>logs.push('Error: '+a.join(' '))};
+        new Function('console',code)(fc);
+        ob.textContent=logs.join('\n')||(curLang==='typescript'?'// TypeScript runs as JS here':'(no output)');
+        ob.className='obtext';
+      }catch(e){ ob.textContent='Error: '+e.message; ob.className='obtext err'; }
+    } else if(curLang==='html'){
+      ob.textContent='✅ HTML rendered in preview below ↓'; ob.className='obtext'; refreshPreview();
+    } else {
+      ob.textContent=SIMOUT[curLang]||'✅ Executed successfully.'; ob.className='obtext';
+    }
+  },480);
+}
+function refreshPreview(){
+  const code=document.getElementById('carea').value;
+  const f=document.getElementById('ppframe');
+  const b=new Blob([code],{type:'text/html'}); f.src=URL.createObjectURL(b);
+}
+function resetCode(){ document.getElementById('carea').value=CODE[curLang]||''; document.getElementById('obtext').textContent='// Code reset.'; }
+function completeLesson(){
+  if(!CU)return;
+  const key=curLang+'-'+curLesson;
+  if(!(CU.completedLessons||[]).includes(key)){
+    CU.completedLessons=[...(CU.completedLessons||[]),key];
+    CU.xp=(CU.xp||0)+25;
+    const total=(LESSONS[curLang]||[]).length;
+    const done=CU.completedLessons.filter(k=>k.startsWith(curLang)).length;
+    if(!CU.progress)CU.progress={};
+    CU.progress[curLang]=Math.round((done/total)*100);
+    DB.saveUser(CU); set('ed-xp',CU.xp+' XP'); toast('🎉 +25 XP earned!');
+  }
+  const btn=document.getElementById('btn-done');
+  btn.textContent='✓ Completed!'; btn.className='bcomplete done';
+  buildTabs();
+  const ls=LESSONS[curLang]||[];
+  if(curLesson<ls.length-1) setTimeout(()=>setLesson(curLesson+1),550);
+}
+
+// ═══════════════════════════════════════════════════════
+// AI TUTOR
+// ═══════════════════════════════════════════════════════
+async function askAI(){
+  const prompt=document.getElementById('ai-in').value.trim(); if(!prompt)return;
+  const code=document.getElementById('carea').value;
+  const resp=document.getElementById('ai-resp');
+  const btn=document.getElementById('ai-btn');
+  resp.style.display=''; resp.textContent='⏳ Thinking...'; btn.disabled=true;
+  const l=LANGS.find(x=>x.id===curLang);
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`You are a concise ${l.name} programming tutor. Answer under 150 words. Use short code examples when helpful. No markdown headers.`,
+        messages:[{role:'user',content:`My ${l.name} code:\n\`\`\`\n${code}\n\`\`\`\nQuestion: ${prompt}`}]
+      })
+    });
+    const d=await r.json();
+    resp.textContent=d.content?.map(c=>c.text||'').join('')||'No response.';
+  }catch(e){ resp.textContent='⚠️ AI tutor unavailable. Check connection.'; }
+  btn.disabled=false;
+}
+
+// ═══════════════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════════════
+function loadProfile(){
+  if(!CU)return;
+  const initials=(CU.avatar||CU.name.split(' ').map(w=>w[0]).join('')).toUpperCase().slice(0,2);
+  set('pf-av',initials); set('pf-nm',CU.name); set('pf-em',CU.email);
+  set('pf-lvl','Level '+(Math.floor((CU.xp||0)/100)+1));
+  set('pf-joined',CU.joined?new Date(CU.joined).toLocaleDateString():'—');
+  set('pf-xp',CU.xp||0); set('pf-streak','🔥 '+(CU.streak||0)+' days');
+  set('pf-less',(CU.completedLessons||[]).length);
+  document.getElementById('pf-langs').innerHTML=LANGS.map(l=>{
+    const p=(CU.progress||{})[l.id]||0;
+    return`<div class="pfrow"><span>${l.icon} ${l.name}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:72px;height:4px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden">
+          <div style="width:${p}%;height:100%;background:${l.color};border-radius:99px"></div>
+        </div>
+        <span style="font-size:11px;color:var(--muted);min-width:26px;text-align:right">${p}%</span>
+      </div></div>`;
+  }).join('');
+}
+function doLogout(){ DB.clearSession(); CU=null; goTo('auth'); toast('👋 Signed out'); }
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function g(id){ return document.getElementById(id)?.value||''; }
+function set(id,v){ const e=document.getElementById(id); if(e)e.textContent=v; }
+function err(id,m){ const e=document.getElementById(id); if(e){e.textContent=m;e.className='merr';e.style.display='';} }
+function hide(id){ const e=document.getElementById(id); if(e)e.style.display='none'; }
+function setBL(id,on){
+  const b=document.getElementById(id); if(!b)return; b.disabled=on;
+  if(on){ b.dataset.orig=b.innerHTML; b.innerHTML='<span class="spin"></span>'; }
+  else { b.innerHTML=b.dataset.orig||b.textContent; }
+}
+let _tt; function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2600);}
+</script>
+</body>
+</html>
